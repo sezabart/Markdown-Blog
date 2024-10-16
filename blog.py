@@ -4,16 +4,36 @@ from fasthtml.common import (
     # FastHTML's specific symbols
     Beforeware, FastHTML, fast_app, SortableJS, fill_form, picolink, serve, NotStr,
     # From Starlette, Fastlite, fastcore, and the Python standard library:
-    FileResponse, NotFoundError, RedirectResponse, database, patch, dataclass, UploadFile
+    FileResponse, Response ,NotFoundError, RedirectResponse, database, patch, dataclass, UploadFile
 )
 
-import os
+
+from h11 import Request
 import markdown
 from pathlib import Path
 from datetime import datetime
+import yaml
+import locale
+
+# Load configuration from a YAML file
+config_path = Path("config.yaml")
+
+def load_config(path):
+    with open(path, "r") as file:
+        return yaml.safe_load(file)
+
+config = load_config(config_path)
+
+# Directory containing the markdown files
+content_dir = Path(config['blog']['content_dir'])
+
+# Set locale based on configuration
+locale.setlocale(locale.LC_TIME, config['blog']['locale'])
+
+
 
 # This will be our 404 handler, which will return a simple error page.
-def _not_found(req, exc): return Titled('Oh no!', Div('We could not find that page :('))
+def _not_found(req, exc): return Titled(config['blog'][404]['title'], Div(config['blog'][404]['content']))
 
 # FastHTML includes the "HTMX" and "Surreal" libraries in headers, unless you pass `default_hdrs=False`.
 app = FastHTML(exception_handlers={404: _not_found},
@@ -29,66 +49,57 @@ app = FastHTML(exception_handlers={404: _not_found},
 # `app.route` (or `rt`) requires only the path, using the decorated function's name as the HTTP verb.
 rt = app.route
 
-@rt("/") # Index page
-def get():
-    return Titled('Barts Blog', Div('Welcome to my blog!'))
-
-# Directory containing the markdown files
-content_dir = Path("example_content")
-
-@rt("/posts")
+@rt("/")
 def list_posts():
     posts = sorted(
-        [f.stem for f in content_dir.glob("*.md")],
-        key=lambda f: (content_dir / f"{f}.md").stat().st_ctime,
+        [d.name for d in content_dir.iterdir() if d.is_dir()],
+        key=lambda d: d.split("-")[0],
         reverse=True
     )
     return Titled(
-        'Barts Blogs', 
-        P('Intro tekst'),
-        H4(Ol(*[Li(A(post, href=f"/posts/{post}")) for post in posts], reversed=True)),
+        config['blog']['title'],
+        P(config['blog']['intro']),
+        *[A(H4(post), href=f"/post/{post}") for post in posts],
     )
 
-@rt("/posts/src/{src_name}")
-def get_src(src_name: str):
-    src_path = content_dir / src_name
-    if not src_path.exists():
-        raise NotFoundError()
-    
-    return FileResponse(src_path)
-
-@rt("/posts/{name}")
+@rt("/post/{name:str}")
 def get_post(name: str):
-    if "." in name:  # Check if the name has a file extension
-        src_path = content_dir / name
-        if not src_path.exists():
-            raise NotFoundError()
-        return FileResponse(src_path)
+    post_dir = content_dir / f"{name}"
+    md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"])
     
-    # Else its a post in markdown
-
-    post_path = content_dir / f"{name}.md"
-    if not post_path.exists():
-        raise NotFoundError()
+    if not md_files:
+        return Response("File not found", status_code=404)
     
-    with open(post_path, "r", encoding="utf-8") as f:
-        md_content = f.read()
-        print(md_content)
-        creation_date = datetime.fromtimestamp(post_path.stat().st_ctime)
-        last_modified_date = datetime.fromtimestamp(post_path.stat().st_mtime)
-    
-    # Convert markdown to HTML
-    html_content = markdown.markdown(md_content)
+    posts = [Div(
+            f'Geschreven op {datetime.fromtimestamp(post_path.stat().st_ctime).strftime("%A, %-d %B %Y")}',
+            Hr(),
+            NotStr(
+                markdown.markdown(
+                    post_path.read_text(encoding="utf-8")
+                    ).replace('src="', f'src="{name}/')
+                ),
+            Hr(),
+        )
+        for post_path in md_files
+    ]
 
 
     return Titled(
         name,
-        f'Geschreven op {creation_date.strftime("%A, %-d %B %Y")}',
-        Hr(),
-        NotStr(html_content),
-        Hr(),
-        A("Terug", href="/posts")
+        *posts,
+        A(config['blog']['back'], href="/")
     )
+
+@rt("/post/{name:str}/{file:str}")
+def get_post_file(name: str, file: str):
+    post_dir = content_dir / f"{name}"
+    post_file = post_dir / f"{file}"
+    
+    if not post_file.exists():
+        # Return a 404 response without raising an exception
+        return Response("File not found", status_code=404)
+    
+    return FileResponse(post_file)
 
 
 

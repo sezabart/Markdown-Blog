@@ -1,0 +1,10 @@
+blog:
+  title: "Barts Blog"
+  intro: "Bla bla bla"
+  404:
+    title: "404"
+    content: "Pagina niet gevonden :("
+  back: "< Terug"
+  
+  locale: "nl_NL"
+  content_dir: "example_content"
