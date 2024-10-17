@@ -1,10 +1,20 @@
 blog:
-  title: "Blog"
-  intro: "This is my blog!"
+  title: "Barts Blog"
+  intro: "Bla bla bla"
   404:
     title: "404"
-    content: "Page not found"
-  back: "< Back"
+    content: "Pagina niet gevonden :("
+  back: "< Terug naar"
   
-  locale: "en"
+  locale: "nl_NL"
   content_dir: "example_content"
+
+  email:
+    subscribe: "Abboneer"
+    unsubscribe: "Uitschrijven"
+    subscribe_success: "Geabonneerd"
+    already_subscribed: "Al geabonneerd"
+    unsubscribe_success: "Uitgeschreven"
+    not_subscribed: "Niet geabonneerd"
+
+  disclaimer: "© 2024 Bart Smits"
