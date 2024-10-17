@@ -24,3 +24,9 @@ example_content/
 .jpeg
 .pdf
 .md
+
+# Ignore configuration files
+config.yaml
+
+# Ignore mailing list files
+mailing_list.txt
