@@ -1,3 +1,7 @@
+from argparse import Action
+from ast import Return
+from calendar import c
+from gc import disable
 from fasthtml.common import (
     # FastHTML's HTML tags
     A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group,P, H1, H2, H3, H4, H5, Hr, Hidden, Input, Li, Ul, Ol, Main, Script, Style, Textarea, Title, Titled, Select, Option, Table, Tr, Th, Td,
@@ -42,7 +46,7 @@ app = FastHTML(exception_handlers={404: _not_found},
                hdrs=(picolink,
                      # `Style` is an `FT` object, which are 3-element lists consisting of:
                      # (tag_name, children_list, attrs_dict).
-                     Style(':root { --pico-font-size: 100%; }'),
+                     Style(':root { --pico-font-size: 100%}'),
                 )
       )
 
@@ -59,7 +63,19 @@ def list_posts():
     return Titled(
         config['blog']['title'],
         P(config['blog']['intro']),
-        *[A(H4(post), href=f"/post/{post}") for post in posts],
+        *[A(H4(post), href=f"/post/{post}", hx_boost="true") for post in posts],
+        Div(
+            Hr(),
+            Group(
+                Input(placeholder="Email", type="email", id="email"),
+                Button("", id="info", disabled=True, style="width: 30%;", cls="secondary"),
+                Button(config['blog']['email']['subscribe'], type="submit", hx_post="/subscribe", hx_swap="innerHTML", hx_include="#email", hx_target="#info"),
+                Button(config['blog']['email']['unsubscribe'], type="submit", hx_delete="/unsubscribe", hx_swap="innerHTML", hx_include="#email", hx_target="#info", cls="outline"),
+                style="width: 100%",
+            ),
+            P(config['blog']['disclaimer']),
+            style="position: fixed; bottom: 0; width: 85%",
+        ),
     )
 
 @rt("/post/{name:str}")
@@ -78,7 +94,7 @@ def get_post(name: str):
                     post_path.read_text(encoding="utf-8")
                     ).replace('src="', f'src="{name}/')
                 ),
-            Hr(),
+            style="max-width: 80%; margin: auto auto 5rem auto;",
         )
         for post_path in md_files
     ]
@@ -86,8 +102,9 @@ def get_post(name: str):
 
     return Titled(
         name,
+        A(f"{config['blog']['back']} {config['blog']['title']}", href="/", hx_boost="true"),
+        Hr(),
         *posts,
-        A(config['blog']['back'], href="/")
     )
 
 @rt("/post/{name:str}/{file:str}")
@@ -102,5 +119,36 @@ def get_post_file(name: str, file: str):
     return FileResponse(post_file)
 
 
+mailing_list_file = Path("mailing_list.txt")
+
+@rt("/subscribe")
+def post(email: str): # to list
+    print(email)
+    if not mailing_list_file.exists():
+        mailing_list_file.touch()
+    
+    with mailing_list_file.open("r+") as file:
+        emails = file.read().splitlines()
+        if email not in emails:
+            file.write(email + "\n")
+            return config['blog']['email']['subscribe_success']
+        else:
+            return config['blog']['email']['already_subscribed']
+
+@rt("/unsubscribe")
+def delete(email: str): # from list
+    if not mailing_list_file.exists():
+        return config['blog']['email']['not_subscribed']
+    
+    with mailing_list_file.open("r+") as file:
+        emails = file.read().splitlines()
+        if email in emails:
+            emails.remove(email)
+            file.seek(0)
+            file.truncate()
+            file.write("\n".join(emails) + "\n")
+            return config['blog']['email']['unsubscribe_success']
+        else:
+            return config['blog']['email']['not_subscribed']
 
 serve()
