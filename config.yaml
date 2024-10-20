@@ -7,7 +7,7 @@ blog:
   back: "< Terug naar"
   
   locale: "nl_NL"
-  content_dir: "example_content"
+  content_dir: "content"
 
   email:
     subscribe: "Abboneer"

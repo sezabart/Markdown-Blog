@@ -1,0 +1,55 @@
+# Markdown-Blog
+
+Markdown-Blog is a lightweight FastHTML server designed to automatically display blog posts based on directories within a specified content path. Each directory represents a blog, and any markdown files within the directory are treated as blog content. Images and other assets of the blog should be stored in the directory.
+
+## Features
+
+- Automatically detects and serves blog posts from directories.
+- Supports markdown files for blog content.
+- Serves images and other assets from the same directory as the markdown files.
+
+## Installation
+
+1. Clone the repository:
+    ```sh
+    git clone https://github.com/sezabart/markdown-blog.git
+    cd markdown-blog
+    ```
+
+2. Install Python (if not already installed). You can download it from [python.org](https://www.python.org/).
+
+3. Install the required Python packages:
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+## Usage
+
+1. Start the server:
+    ```sh
+    python blog.py 
+    ```
+2. Place your blog directories inside the `content` path. Each directory should contain markdown files and any related assets.
+
+3. Find your server at 
+
+## Directory Structure
+
+```
+content/
+├── post1/
+│   ├── update1.md
+│   ├── update2.md
+│   ├── image1.png
+├── post2/
+│   ├── update1.md
+│   ├── image2.jpg
+```
+
+## Contributing
+
+Contributions are welcome! Please submit a pull request or open an issue to discuss any changes.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
