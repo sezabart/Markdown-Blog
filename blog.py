@@ -84,7 +84,7 @@ def list_blogs():
 @rt("/{blog:str}/")
 def list_posts(blog:str):
     blog_config = blogs_config[blog]
-    blog_dir = content_dir / blog
+    blog_dir = content_dir / f"{blog}"
     posts = sorted(
         [d.name for d in blog_dir.iterdir() if d.is_dir()],
         key=lambda d: d.split("-")[0],
@@ -92,8 +92,10 @@ def list_posts(blog:str):
     )
     return Titled(
         blog_config['title'],
+        A(f"{blog_config['back']} Blogs", href="/", hx_boost="true"),
+        Hr(),
         P(blog_config['intro']),
-        *[A(H4(post), href=f"/post/{post}", hx_boost="true") for post in posts],
+        *[A(H4(post), href=f"/{blog}/post/{post}", hx_boost="true") for post in posts],
         Div(
             Hr(),
             MailForm(blog),
@@ -105,7 +107,7 @@ def list_posts(blog:str):
 @rt("/{blog:str}/post/{name:str}")
 def get_post(blog:str, name: str):
     blog_config = blogs_config[blog]
-    post_dir = content_dir / f"{name}"
+    post_dir = content_dir / f"{blog}" / f"{name}"
     md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"], reverse=True)
     
     if not md_files:
@@ -116,7 +118,7 @@ def get_post(blog:str, name: str):
 
     return Titled(
         name,
-        A(f"{blog_config['back']} {blog_config['title']}", href="/", hx_boost="true"),
+        A(f"{blog_config['back']} {blog_config['title']}", href=f"/{blog}/", hx_boost="true"),
         Hr(),
         *updates,
     )
