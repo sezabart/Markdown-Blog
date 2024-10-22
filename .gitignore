@@ -19,7 +19,7 @@ data/
 .sesskey
 
 # Ignore example files
-example_content/
+content/
 .jpg
 .jpeg
 .pdf
@@ -29,4 +29,4 @@ example_content/
 config.yaml
 
 # Ignore mailing list files
-mailing_list.txt
+mailing_lists/

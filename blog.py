@@ -1,14 +1,10 @@
-from argparse import Action
-from ast import Return
-from calendar import c
-from gc import disable
 from fasthtml.common import (
     # FastHTML's HTML tags
     A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group,P,I, H1, H2, H3, H4, H5, Hr, Hidden, Input, Li, Ul, Ol, Main, Script, Style, Textarea, Title, Titled, Select, Option, Table, Tr, Th, Td,
     # FastHTML's specific symbols
-    Beforeware, FastHTML, fast_app, SortableJS, fill_form, picolink, serve, NotStr,
+    Beforeware, FastHTML, fill_form, picolink, serve, NotStr,
     # From Starlette, Fastlite, fastcore, and the Python standard library:
-    FileResponse, Response ,NotFoundError, RedirectResponse, database, patch, dataclass, UploadFile
+    FileResponse, Response ,NotFoundError, RedirectResponse, patch, dataclass
 )
 
 
@@ -16,58 +12,50 @@ import markdown
 from pathlib import Path
 from datetime import datetime
 import yaml
-import locale
+from babel.dates import format_date
 
 # Load configuration from a YAML file
 config_path = Path("config.yaml")
 
-def load_config(path):
-    with open(path, "r") as file:
-        return yaml.safe_load(file)
-
-config = load_config(config_path)
+with open(config_path, "r") as file:
+    config = yaml.safe_load(file)
 
 # Directory containing the markdown files
-content_dir = Path(config['blog']['content_dir'])
-
-# Set locale based on configuration
-locale.setlocale(locale.LC_TIME, config['blog']['locale'])
+content_dir = Path(config['content_dir'])
+blogs_config = config['blogs']
 
 
 
 # This will be our 404 handler, which will return a simple error page.
-def _not_found(req, exc): return Titled(config['blog'][404]['title'], Div(config['blog'][404]['content']))
+def _not_found(req, exc): return Titled('404', 'Page Not Found')
 
 # FastHTML includes the "HTMX" and "Surreal" libraries in headers, unless you pass `default_hdrs=False`.
 app = FastHTML(exception_handlers={404: _not_found},
                # PicoCSS is a tiny CSS framework that we'll use for this project.
                # `picolink` is pre-defined with the header for the PicoCSS stylesheet.
                hdrs=(picolink,
-                     # `Style` is an `FT` object, which are 3-element lists consisting of:
-                     # (tag_name, children_list, attrs_dict).
                      Style(':root { --pico-font-size: 100%}'),
                 )
       )
 
-# `app.route` (or `rt`) requires only the path, using the decorated function's name as the HTTP verb.
 rt = app.route
 
-
-def MailForm():
+def MailForm(blog):
+    blog_config = blogs_config[blog]
     return Group(
-                Input(placeholder="Email", type="email", id="email"),
-                Button("", id="info", disabled=True, style="width: 30%;", cls="secondary"),
-                Button(config['blog']['email']['subscribe'], hx_post="/subscribe", hx_swap="innerHTML", hx_include="#email", hx_target="#info"),
-                Button(config['blog']['email']['unsubscribe'], hx_delete="/unsubscribe", hx_swap="innerHTML", hx_include="#email", hx_target="#info", cls="outline"),
+                Input(placeholder="Email", type="email", id="email", style="width: 40%"),
+                Button(blog_config['email']['subscribe'], hx_post=f"/{blog}/subscribe", hx_swap="outerHTML", hx_include="#email"),
+                Button(blog_config['email']['unsubscribe'], hx_delete=f"/{blog}/unsubscribe", hx_swap="outerHTML", hx_include="#email", cls="outline"),
                 style="width: 100%",
             ),
 
 
 
-def Update(path, name):
-    if path.stem.isdigit() and len(path.stem) == 8:
+def Update(update_path, post_name, blog):
+    blog_config = blogs_config[blog]
+    if update_path.stem.isdigit() and len(update_path.stem) == 8:
         try:
-            date = datetime.strptime(path.stem, "%Y%m%d")
+            date = datetime.strptime(update_path.stem, "%Y%m%d")
         except ValueError:
             date = None
     else:
@@ -77,53 +65,65 @@ def Update(path, name):
         Hr(),
         NotStr(
             markdown.markdown(
-                path.read_text(encoding="utf-8")
-                ).replace('src="', f'src="{name}/')
+                update_path.read_text(encoding="utf-8")
+                ).replace('src="', f'src=f"/{blog}{post_name}/')
             ),
-        I(f'{config['blog']['written']} {date.strftime("%A, %-d %B %Y")}' if date else None),
+        I(f'{blog_config["written"]} {format_date(date, locale=blog_config['locale'])}' if date else None),
         style="max-width: 80%; margin: auto auto 5rem auto;",
-        )
-
+    )
 
 @rt("/")
-def list_posts():
+def list_blogs():
+    return Titled(
+        "Blogs",
+        P("Select a blog to view its posts:"),
+        *[A(H4(config['title']), href=f"/{blog}/", hx_boost="true") for blog, config in blogs_config.items()],
+        style="max-width: 80%; margin: auto auto 5rem auto;",
+    )
+
+@rt("/{blog:str}/")
+def list_posts(blog:str):
+    blog_config = blogs_config[blog]
+    blog_dir = content_dir / blog
     posts = sorted(
-        [d.name for d in content_dir.iterdir() if d.is_dir()],
+        [d.name for d in blog_dir.iterdir() if d.is_dir()],
         key=lambda d: d.split("-")[0],
         reverse=True
     )
     return Titled(
-        config['blog']['title'],
-        P(config['blog']['intro']),
+        blog_config['title'],
+        P(blog_config['intro']),
         *[A(H4(post), href=f"/post/{post}", hx_boost="true") for post in posts],
         Div(
             Hr(),
-            MailForm(),
-            P(config['blog']['disclaimer']),
+            MailForm(blog),
+            P(blog_config['disclaimer']),
             style="position: fixed; bottom: 0; width: 85%",
         ),
     )
 
-@rt("/post/{name:str}")
-def get_post(name: str):
+@rt("/{blog:str}/post/{name:str}")
+def get_post(blog:str, name: str):
+    blog_config = blogs_config[blog]
     post_dir = content_dir / f"{name}"
     md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"], reverse=True)
     
     if not md_files:
         return Response("File not found", status_code=404)
     
-    updates = [Update(path, name) for path in md_files]
+    updates = [Update(path, name, blog) for path in md_files]
 
 
     return Titled(
         name,
-        A(f"{config['blog']['back']} {config['blog']['title']}", href="/", hx_boost="true"),
+        A(f"{blog_config['back']} {blog_config['title']}", href="/", hx_boost="true"),
         Hr(),
         *updates,
     )
 
-@rt("/post/{name:str}/{file:str}")
-def get_post_file(name: str, file: str):
+@rt("/{blog:str}/post/{name:str}/{file:str}")
+def get_post_file(blog:str, name: str, file: str):
+    blog_config = blogs_config[blog]
     post_dir = content_dir / f"{name}"
     post_file = post_dir / f"{file}"
     
@@ -134,10 +134,12 @@ def get_post_file(name: str, file: str):
     return FileResponse(post_file)
 
 
-mailing_list_file = Path("mailing_list.txt")
 
-@rt("/subscribe")
-def post(email: str): # to list
+
+@rt("/{blog:str}/subscribe")
+def post(blog:str, email: str): # to list
+    blog_config = blogs_config[blog]
+    mailing_list_file = Path(f"mailing_lists/{blog}.txt")
     if not mailing_list_file.exists():
         mailing_list_file.touch()
     
@@ -145,14 +147,16 @@ def post(email: str): # to list
         emails = file.read().splitlines()
         if email not in emails:
             file.write(email + "\n")
-            return config['blog']['email']['subscribe_success']
+            return Button(blog_config['email']['subscribe_success'], disabled=True)
         else:
-            return config['blog']['email']['already_subscribed']
+            return Button(blog_config['email']['already_subscribed'], disabled=True)
 
-@rt("/unsubscribe")
-def delete(email: str): # from list
+@rt("/{blog:str}/unsubscribe")
+def delete(blog:str, email: str): # from list
+    blog_config = blogs_config[blog]
+    mailing_list_file = Path(f"mailing_lists/{blog}.txt")
     if not mailing_list_file.exists():
-        return config['blog']['email']['not_subscribed']
+        return blog_config['email']['not_subscribed']
     
     with mailing_list_file.open("r+") as file:
         emails = file.read().splitlines()
@@ -161,8 +165,8 @@ def delete(email: str): # from list
             file.seek(0)
             file.truncate()
             file.write("\n".join(emails) + "\n")
-            return config['blog']['email']['unsubscribe_success']
+            return Button(blog_config['email']['unsubscribe_success'], disabled=True, cls="outline")
         else:
-            return config['blog']['email']['not_subscribed']
+            return Button(blog_config['email']['not_subscribed'], disabled=True, cls="outline")
 
 serve()

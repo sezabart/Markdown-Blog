@@ -1,20 +1,36 @@
-blog:
-  title: "Barts Blog"
-  intro: "Bla bla bla"
-  404:
-    title: "404"
-    content: "Pagina niet gevonden :("
-  back: "< Terug naar"
-  
-  locale: "nl_NL"
-  content_dir: "content"
+content_dir: "content"
+blogs:
+  nlblog:
+    title: "Barts Blog"
+    intro: "Bla bla bla"
+    back: "< Terug naar"
+    written: "Geschreven op"
+    
+    locale: "nl_NL"
 
-  email:
-    subscribe: "Abboneer"
-    unsubscribe: "Uitschrijven"
-    subscribe_success: "Geabonneerd"
-    already_subscribed: "Al geabonneerd"
-    unsubscribe_success: "Uitgeschreven"
-    not_subscribed: "Niet geabonneerd"
+    email:
+      subscribe: "Abboneer"
+      unsubscribe: "Uitschrijven"
+      subscribe_success: "Geabonneerd"
+      already_subscribed: "Al geabonneerd"
+      unsubscribe_success: "Uitgeschreven"
+      not_subscribed: "Niet geabonneerd"
 
-  disclaimer: "© 2024 Bart Smits"
+    disclaimer: "© 2024 Bart Smits"
+  ljblog:
+    title: "LJ blog"
+    intro: "Blah blah blah"
+    back: "< Back to"
+    written: "Written on"
+
+    locale: "en_US"
+
+    email:
+      subscribe: "Subscribe"
+      unsubscribe: "Unsubscribe"
+      subscribe_success: "Subscribed"
+      already_subscribed: "Already subscribed"
+      unsubscribe_success: "Unsubscribed"
+      not_subscribed: "Not subscribed"
+
+    disclaimer: "© 2024 Bart Smits"
