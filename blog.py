@@ -4,7 +4,7 @@ from calendar import c
 from gc import disable
 from fasthtml.common import (
     # FastHTML's HTML tags
-    A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group,P, H1, H2, H3, H4, H5, Hr, Hidden, Input, Li, Ul, Ol, Main, Script, Style, Textarea, Title, Titled, Select, Option, Table, Tr, Th, Td,
+    A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group,P,I, H1, H2, H3, H4, H5, Hr, Hidden, Input, Li, Ul, Ol, Main, Script, Style, Textarea, Title, Titled, Select, Option, Table, Tr, Th, Td,
     # FastHTML's specific symbols
     Beforeware, FastHTML, fast_app, SortableJS, fill_form, picolink, serve, NotStr,
     # From Starlette, Fastlite, fastcore, and the Python standard library:
@@ -12,7 +12,6 @@ from fasthtml.common import (
 )
 
 
-from h11 import Request
 import markdown
 from pathlib import Path
 from datetime import datetime
@@ -53,6 +52,39 @@ app = FastHTML(exception_handlers={404: _not_found},
 # `app.route` (or `rt`) requires only the path, using the decorated function's name as the HTTP verb.
 rt = app.route
 
+
+def MailForm():
+    return Group(
+                Input(placeholder="Email", type="email", id="email"),
+                Button("", id="info", disabled=True, style="width: 30%;", cls="secondary"),
+                Button(config['blog']['email']['subscribe'], hx_post="/subscribe", hx_swap="innerHTML", hx_include="#email", hx_target="#info"),
+                Button(config['blog']['email']['unsubscribe'], hx_delete="/unsubscribe", hx_swap="innerHTML", hx_include="#email", hx_target="#info", cls="outline"),
+                style="width: 100%",
+            ),
+
+
+
+def Update(path, name):
+    if path.stem.isdigit() and len(path.stem) == 8:
+        try:
+            date = datetime.strptime(path.stem, "%Y%m%d")
+        except ValueError:
+            date = None
+    else:
+        date = None
+
+    return Div(
+        Hr(),
+        NotStr(
+            markdown.markdown(
+                path.read_text(encoding="utf-8")
+                ).replace('src="', f'src="{name}/')
+            ),
+        I(f'{config['blog']['written']} {date.strftime("%A, %-d %B %Y")}' if date else None),
+        style="max-width: 80%; margin: auto auto 5rem auto;",
+        )
+
+
 @rt("/")
 def list_posts():
     posts = sorted(
@@ -66,13 +98,7 @@ def list_posts():
         *[A(H4(post), href=f"/post/{post}", hx_boost="true") for post in posts],
         Div(
             Hr(),
-            Group(
-                Input(placeholder="Email", type="email", id="email"),
-                Button("", id="info", disabled=True, style="width: 30%;", cls="secondary"),
-                Button(config['blog']['email']['subscribe'], type="submit", hx_post="/subscribe", hx_swap="innerHTML", hx_include="#email", hx_target="#info"),
-                Button(config['blog']['email']['unsubscribe'], type="submit", hx_delete="/unsubscribe", hx_swap="innerHTML", hx_include="#email", hx_target="#info", cls="outline"),
-                style="width: 100%",
-            ),
+            MailForm(),
             P(config['blog']['disclaimer']),
             style="position: fixed; bottom: 0; width: 85%",
         ),
@@ -81,30 +107,19 @@ def list_posts():
 @rt("/post/{name:str}")
 def get_post(name: str):
     post_dir = content_dir / f"{name}"
-    md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"])
+    md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"], reverse=True)
     
     if not md_files:
         return Response("File not found", status_code=404)
     
-    posts = [Div(
-            f'Geschreven op {datetime.fromtimestamp(post_path.stat().st_ctime).strftime("%A, %-d %B %Y")}',
-            Hr(),
-            NotStr(
-                markdown.markdown(
-                    post_path.read_text(encoding="utf-8")
-                    ).replace('src="', f'src="{name}/')
-                ),
-            style="max-width: 80%; margin: auto auto 5rem auto;",
-        )
-        for post_path in md_files
-    ]
+    updates = [Update(path, name) for path in md_files]
 
 
     return Titled(
         name,
         A(f"{config['blog']['back']} {config['blog']['title']}", href="/", hx_boost="true"),
         Hr(),
-        *posts,
+        *updates,
     )
 
 @rt("/post/{name:str}/{file:str}")
@@ -123,7 +138,6 @@ mailing_list_file = Path("mailing_list.txt")
 
 @rt("/subscribe")
 def post(email: str): # to list
-    print(email)
     if not mailing_list_file.exists():
         mailing_list_file.touch()
     
