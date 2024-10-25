@@ -62,13 +62,12 @@ def Update(update_path, post_name, blog):
     else:
         date = None
 
-    slugged_post_name = post_name.replace(" ", "-")
     return Div(
         Hr(),
         NotStr(
             markdown.markdown(
                 update_path.read_text(encoding="utf-8")
-                ).replace('src="', f'src="{slugged_post_name}/file/')
+                ).replace('src="', f'src="{post_name}/')
             ),
         I(f'{blog_config["written"]} {format_date(date, locale=blog_config['locale'])}' if date else None),
         style="max-width: 80%; margin: auto auto 5rem auto;",
@@ -100,7 +99,7 @@ def list_blogs():
     return Titled(
         "Blogs",
         P("Select a blog to view its posts:"),
-        *[A(H4(config['title']), href=f"/blogs/{blog}/", hx_boost="true") for blog, config in blogs_config.items()],
+        *[A(H4(config['title']), href=f"/blogs/{blog}/" ) for blog, config in blogs_config.items()],
         style="max-width: 80%; margin: auto auto 5rem auto;",
     )
 
@@ -115,10 +114,10 @@ def list_posts(blog:str):
     )
     return Titled(
         blog_config['title'],
-        A(f"{blog_config['back']} Blogs", href="/blogs/", hx_boost="true"),
+        A(f"{blog_config['back']} Blogs", href="/blogs/" ),
         Hr(),
         P(blog_config['intro']),
-        *[A(H4(post), href=f"/blogs/{blog}/post/{post}", hx_boost="true") for post in posts],
+        *[A(H4(post), href=f"/blogs/{blog}/post/{post}" ) for post in posts],
         Div(
             Hr(),
             MailForm(blog),
@@ -127,40 +126,37 @@ def list_posts(blog:str):
         ),
     )
 
-@rt("/blogs/{blog:str}/post/{name:str}")
-def get_post(blog:str, name: str):
-    print(f"get_post {blog=}, {name=}")
+@rt("/blogs/{blog:str}/post/{post_name:str}")
+def get_post(blog:str, post_name: str):
     blog_config = blogs_config[blog]
-    post_dir = content_dir / f"{blog}" / f"{name}"
+    post_dir = content_dir / f"{blog}" / f"{post_name}"
     md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"], reverse=True)
     
     if not md_files:
         return Response("File not found", status_code=404)
     
-    updates = [Update(path, name, blog) for path in md_files]
+    updates = [Update(path, post_name, blog) for path in md_files]
 
 
     return Titled(
-        name,
-        A(f"{blog_config['back']} {blog_config['title']}", href=f"/blogs/{blog}/", hx_boost="true"),
+        post_name,
+        A(f"{blog_config['back']} {blog_config['title']}", href=f"/blogs/{blog}/" ),
         Hr(),
         *updates,
     )
 
-@rt("/blogs/{blog:str}/post/{name:str}/file/{filename:str}")
-def get_post_file(blog:str, name: str, file: str):
-    print(f"get_post_file {blog=}, {name=} {file=}")
-    post_dir = content_dir / f"{name}"
-    filename = filename.replace("-", " ")
+@rt("/blogs/{blog:str}/post/{post_name:str}/{filename:str}")
+def get_post_file(blog:str, post_name: str, filename: str):
+    # Content_dir / Blog_dir / Post_dir / Filename
+    # Post_dir is the title of the post, and is allowed to have spaces
+    post_dir = content_dir / f"{blog}" / f"{post_name}"
     post_file = post_dir / f"{filename}"
-    print(f"{post_file=}")
+
     if not post_file.exists():
         # Return a 404 response without raising an exception
         return Response("File not found", status_code=404)
     
     return FileResponse(post_file)
-
-
 
 
 @rt("/blogs/{blog:str}/subscribe")
