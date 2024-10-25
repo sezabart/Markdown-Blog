@@ -1,6 +1,6 @@
 from fasthtml.common import (
     # FastHTML's HTML tags
-    A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group,P,I, H1, H2, H3, H4, H5, Hr, Hidden, Input, Li, Ul, Ol, Main, Script, Style, Textarea, Title, Titled, Select, Option, Table, Tr, Th, Td,
+    A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group,P,I, H1, H2, H3, H4, H5, Hr, Hidden, Input, Img, Li, Ul, Ol, Main, Script, Style, Textarea, Title, Titled, Select, Option, Table, Tr, Th, Td,
     # FastHTML's specific symbols
     Beforeware, FastHTML, fill_form, picolink, serve, NotStr,
     # From Starlette, Fastlite, fastcore, and the Python standard library:
@@ -52,6 +52,7 @@ def MailForm(blog):
 
 
 def Update(update_path, post_name, blog):
+    print(f"{post_name=}")
     blog_config = blogs_config[blog]
     if update_path.stem.isdigit() and len(update_path.stem) == 8:
         try:
@@ -61,27 +62,49 @@ def Update(update_path, post_name, blog):
     else:
         date = None
 
+    slugged_post_name = post_name.replace(" ", "-")
     return Div(
         Hr(),
         NotStr(
             markdown.markdown(
                 update_path.read_text(encoding="utf-8")
-                ).replace('src="', f'src=f"/{blog}{post_name}/')
+                ).replace('src="', f'src="{slugged_post_name}/file/')
             ),
         I(f'{blog_config["written"]} {format_date(date, locale=blog_config['locale'])}' if date else None),
         style="max-width: 80%; margin: auto auto 5rem auto;",
     )
 
 @rt("/")
+def home():
+    return Titled(
+        "Bart's Portfolio",
+        Div(
+            Img(src="/static/headshot.jpg", alt="Bart's Headshot", style="border-radius: 50%; width: 150px; height: 150px;"),
+            style="text-align: center; margin-bottom: 2rem;"
+        ),
+        P("👋 Welcome to my portfolio! I am a programmer with a passion for creating efficient and elegant code."),
+        H2("About Me"),
+        P("I have experience in Python, JavaScript, and various other programming languages and frameworks. I enjoy solving complex problems and learning new technologies."),
+        H2("Contact"),
+        P("Feel free to reach out to me:"),
+        Ul(
+            Li(A("📧 Email", href="mailto:bart@seza.si")),
+            Li(A("🐙 GitHub", href="https://github.com/sezabart")),
+        ),
+        style="max-width: 80%; margin: auto auto 5rem auto;",
+    )
+
+
+@rt("/blogs/")
 def list_blogs():
     return Titled(
         "Blogs",
         P("Select a blog to view its posts:"),
-        *[A(H4(config['title']), href=f"/{blog}/", hx_boost="true") for blog, config in blogs_config.items()],
+        *[A(H4(config['title']), href=f"/blogs/{blog}/", hx_boost="true") for blog, config in blogs_config.items()],
         style="max-width: 80%; margin: auto auto 5rem auto;",
     )
 
-@rt("/{blog:str}/")
+@rt("/blogs/{blog:str}/")
 def list_posts(blog:str):
     blog_config = blogs_config[blog]
     blog_dir = content_dir / f"{blog}"
@@ -92,10 +115,10 @@ def list_posts(blog:str):
     )
     return Titled(
         blog_config['title'],
-        A(f"{blog_config['back']} Blogs", href="/", hx_boost="true"),
+        A(f"{blog_config['back']} Blogs", href="/blogs/", hx_boost="true"),
         Hr(),
         P(blog_config['intro']),
-        *[A(H4(post), href=f"/{blog}/post/{post}", hx_boost="true") for post in posts],
+        *[A(H4(post), href=f"/blogs/{blog}/post/{post}", hx_boost="true") for post in posts],
         Div(
             Hr(),
             MailForm(blog),
@@ -104,8 +127,9 @@ def list_posts(blog:str):
         ),
     )
 
-@rt("/{blog:str}/post/{name:str}")
+@rt("/blogs/{blog:str}/post/{name:str}")
 def get_post(blog:str, name: str):
+    print(f"get_post {blog=}, {name=}")
     blog_config = blogs_config[blog]
     post_dir = content_dir / f"{blog}" / f"{name}"
     md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"], reverse=True)
@@ -118,17 +142,18 @@ def get_post(blog:str, name: str):
 
     return Titled(
         name,
-        A(f"{blog_config['back']} {blog_config['title']}", href=f"/{blog}/", hx_boost="true"),
+        A(f"{blog_config['back']} {blog_config['title']}", href=f"/blogs/{blog}/", hx_boost="true"),
         Hr(),
         *updates,
     )
 
-@rt("/{blog:str}/post/{name:str}/{file:str}")
+@rt("/blogs/{blog:str}/post/{name:str}/file/{filename:str}")
 def get_post_file(blog:str, name: str, file: str):
-    blog_config = blogs_config[blog]
+    print(f"get_post_file {blog=}, {name=} {file=}")
     post_dir = content_dir / f"{name}"
-    post_file = post_dir / f"{file}"
-    
+    filename = filename.replace("-", " ")
+    post_file = post_dir / f"{filename}"
+    print(f"{post_file=}")
     if not post_file.exists():
         # Return a 404 response without raising an exception
         return Response("File not found", status_code=404)
@@ -138,7 +163,7 @@ def get_post_file(blog:str, name: str, file: str):
 
 
 
-@rt("/{blog:str}/subscribe")
+@rt("/blogs/{blog:str}/subscribe")
 def post(blog:str, email: str): # to list
     blog_config = blogs_config[blog]
     mailing_list_file = Path(f"mailing_lists/{blog}.txt")
@@ -153,7 +178,7 @@ def post(blog:str, email: str): # to list
         else:
             return Button(blog_config['email']['already_subscribed'], disabled=True)
 
-@rt("/{blog:str}/unsubscribe")
+@rt("/blogs/{blog:str}/unsubscribe")
 def delete(blog:str, email: str): # from list
     blog_config = blogs_config[blog]
     mailing_list_file = Path(f"mailing_lists/{blog}.txt")
