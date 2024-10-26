@@ -75,23 +75,29 @@ def Update(update_path, post_name, blog):
 
 @rt("/")
 def home():
-    return Titled(
-        "Bart's Portfolio",
+    return Container(
+        Title("Bart's Portfolio"),
         Div(
-            Img(src="/static/headshot.jpg", alt="Bart's Headshot", style="border-radius: 50%; width: 150px; height: 150px;"),
-            style="text-align: center; margin-bottom: 2rem;"
+            Img(src="/static/headshot.jpg", alt="Bart's Headshot", style="border-radius: 50%; width: 300px; height: 300px;"),
+            style="margin-bottom: 2rem;"
         ),
+        H1("Bart Smits"),
         P("👋 Welcome to my portfolio! I am a programmer with a passion for creating efficient and elegant code."),
         H2("About Me"),
-        P("I have experience in Python, JavaScript, and various other programming languages and frameworks. I enjoy solving complex problems and learning new technologies."),
+        P("I have experience in Python, JavaScript, and various other programming languages and frameworks.\n I enjoy solving complex problems and learning new technologies."),
         H2("Contact"),
         P("Feel free to reach out to me:"),
-        Ul(
-            Li(A("📧 Email", href="mailto:bart@seza.si")),
-            Li(A("🐙 GitHub", href="https://github.com/sezabart")),
-        ),
-        style="max-width: 80%; margin: auto auto 5rem auto;",
+        Group(A("📧 Email", href="mailto:bart@seza.si"), A("🐙 GitHub", href="https://github.com/sezabart"), ),
+        style="max-width: 80%; margin: auto auto 5rem auto; text-align: center;",
     )
+
+@rt("/static/{filename:str}")
+def get_static_file(filename: str):
+    static_dir = Path("static")
+    static_file = static_dir / f"{filename}"
+    if not static_file.exists():
+        return Response("File not found", status_code=404)
+    return FileResponse(static_file)
 
 
 @rt("/blogs/")
@@ -99,7 +105,7 @@ def list_blogs():
     return Titled(
         "Blogs",
         P("Select a blog to view its posts:"),
-        *[A(H4(config['title']), href=f"/blogs/{blog}/" ) for blog, config in blogs_config.items()],
+        *[A(H4(config['title']), href=f"/blogs/{blog}/", hx_boost="true") for blog, config in blogs_config.items()],
         style="max-width: 80%; margin: auto auto 5rem auto;",
     )
 
@@ -114,10 +120,10 @@ def list_posts(blog:str):
     )
     return Titled(
         blog_config['title'],
-        A(f"{blog_config['back']} Blogs", href="/blogs/" ),
+        A(f"{blog_config['back']} Blogs", href="/blogs/" , hx_boost="true"),
         Hr(),
         P(blog_config['intro']),
-        *[A(H4(post), href=f"/blogs/{blog}/post/{post}" ) for post in posts],
+        *[A(H4(post), href=f"/blogs/{blog}/post/{post}", hx_boost="true") for post in posts],
         Div(
             Hr(),
             MailForm(blog),
@@ -140,7 +146,7 @@ def get_post(blog:str, post_name: str):
 
     return Titled(
         post_name,
-        A(f"{blog_config['back']} {blog_config['title']}", href=f"/blogs/{blog}/" ),
+        A(f"{blog_config['back']} {blog_config['title']}", href=f"/blogs/{blog}/", hx_boost="true"),
         Hr(),
         *updates,
     )
@@ -191,5 +197,3 @@ def delete(blog:str, email: str): # from list
             return Button(blog_config['email']['unsubscribe_success'], disabled=True, cls="outline")
         else:
             return Button(blog_config['email']['not_subscribed'], disabled=True, cls="outline")
-
-serve()
