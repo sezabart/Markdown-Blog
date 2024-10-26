@@ -52,7 +52,6 @@ def MailForm(blog):
 
 
 def Update(update_path, post_name, blog):
-    print(f"{post_name=}")
     blog_config = blogs_config[blog]
     if update_path.stem.isdigit() and len(update_path.stem) == 8:
         try:
@@ -69,20 +68,20 @@ def Update(update_path, post_name, blog):
                 update_path.read_text(encoding="utf-8")
                 ).replace('src="', f'src="{post_name}/')
             ),
-        I(f'{blog_config["written"]} {format_date(date, locale=blog_config['locale'])}' if date else None),
+        I(f'{blog_config["written"]} {format_date(date, locale=blog_config["locale"])}' if date else None),
         style="max-width: 80%; margin: auto auto 5rem auto;",
     )
 
 @rt("/")
 def home():
-    return Container(
-        Title("Bart's Portfolio"),
+    return Titled(
+        "SEZA",
         Div(
             Img(src="/static/headshot.jpg", alt="Bart's Headshot", style="border-radius: 50%; width: 300px; height: 300px;"),
             style="margin-bottom: 2rem;"
         ),
         H1("Bart Smits"),
-        P("👋 Welcome to my portfolio! I am a programmer with a passion for creating efficient and elegant code."),
+        P("👋 I am a programmer with a passion for creating efficient and elegant code."),
         H2("About Me"),
         P("I have experience in Python, JavaScript, and various other programming languages and frameworks.\n I enjoy solving complex problems and learning new technologies."),
         H2("Contact"),
