@@ -44,8 +44,8 @@ def MailForm(blog):
     blog_config = blogs_config[blog]
     return Group(
                 Input(placeholder="Email", type="email", id="email", style="width: 40%"),
-                Button(blog_config['email']['subscribe'], hx_post=f"/{blog}/subscribe", hx_swap="outerHTML", hx_include="#email"),
-                Button(blog_config['email']['unsubscribe'], hx_delete=f"/{blog}/unsubscribe", hx_swap="outerHTML", hx_include="#email", cls="outline"),
+                Button(blog_config['email']['subscribe'], hx_post=f"/blogs/{blog}/subscribe", hx_swap="outerHTML", hx_include="#email"),
+                Button(blog_config['email']['unsubscribe'], hx_delete=f"blogs/{blog}/unsubscribe", hx_swap="outerHTML", hx_include="#email", cls="outline"),
                 style="width: 100%",
             ),
 
