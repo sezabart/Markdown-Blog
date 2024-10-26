@@ -136,7 +136,7 @@ def list_posts(blog:str):
 def get_post(blog:str, post_name: str):
     blog_config = blogs_config[blog]
     post_dir = content_dir / f"{blog}" / f"{post_name}"
-    md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"], reverse=True)
+    md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"], reverse=False)
     
     if not md_files:
         return Response("File not found", status_code=404)
@@ -197,3 +197,6 @@ def delete(blog:str, email: str): # from list
             return Button(blog_config['email']['unsubscribe_success'], disabled=True, cls="outline")
         else:
             return Button(blog_config['email']['not_subscribed'], disabled=True, cls="outline")
+        
+if __name__ == "__main__":
+    serve()
