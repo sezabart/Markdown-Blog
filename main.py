@@ -65,7 +65,8 @@ def Update(update_path, post_name, blog):
         Hr(),
         NotStr(
             markdown.markdown(
-                update_path.read_text(encoding="utf-8")
+                update_path.read_text(encoding="utf-8"),
+                extensions=["markdown.extensions.tables"]
                 ).replace('src="', f'src="{post_name}/')
             ),
         I(f'{blog_config["written"]} {format_date(date, locale=blog_config["locale"])}' if date else None),
