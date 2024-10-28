@@ -1,6 +1,6 @@
 from fasthtml.common import (
     # FastHTML's HTML tags
-    A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group,P,I, H1, H2, H3, H4, H5, Hr, Hidden, Input, Img, Li, Ul, Ol, Main, Script, Style, Textarea, Title, Titled, Select, Option, Table, Tr, Th, Td,
+    A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group,P,I, H1, H2, H3, H4, H5, Hr, Hidden, Input, Img, Li, Ul, Ol, Main, Script, Style, Strong, Textarea, Title, Titled, Select, Option, Table, Tr, Th, Td,
     # FastHTML's specific symbols
     Beforeware, FastHTML, fill_form, picolink, serve, NotStr,
     # From Starlette, Fastlite, fastcore, and the Python standard library:
@@ -83,11 +83,29 @@ def home():
         ),
         H1("Bart Smits"),
         P("👋 I am a programmer with a passion for creating efficient and elegant code."),
-        H2("About Me"),
-        P("I have experience in Python, JavaScript, and various other programming languages and frameworks.\n I enjoy solving complex problems and learning new technologies."),
+        H2("About Skills, I have..."),
+        Group(
+            Card(Img(src="/static/django.png", alt="Django", style="width: 100px;"), footer=P("Expertise in Django, a high-level Python web framework."), style="max-width: 250px;"),
+            Card(Img(src="/static/git.png", alt="Git", style="width: 100px;"), footer=P("Experience with Git, a distributed version control system."), style="max-width: 250px;"),
+            Card(Img(src="/static/tensorflow.png", alt="TensorFlow", style="width: 100px;"), footer=P("Worked with TensorFlow, an open-source machine learning framework."), style="max-width: 250px;"),
+            style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;",
+        ),
+        Group(
+            Card(Img(src="/static/htmx.png", alt="HTMX", style="width: 100px;"), footer=P("Expertise in HTMX, a library that allows you to access modern browser features directly from HTML."), style="max-width: 250px;"),
+            Card(Img(src="/static/fastapi.png", alt="FastAPI", style="width: 100px;"), footer=P("Worked with FastAPI, a modern, fast (high-performance), web framework for building APIs with Python."), style="max-width: 250px;"),
+            Card(Img(src="/static/sqlite.png", alt="SQLite", style="width: 100px;"), footer=P("Expertise in SQLite, a small, fast, self-contained, high-reliability, full-featured, SQL database engine."), style="max-width: 250px;"),
+            style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;",
+        ),
+
+        H2("About My Journey 🚀"),
+        P(Strong("Education:  "), "Willem van Oranje College -> TU Delft (BSc Aerospace Engineering)"),
+        P(Strong("In the Netherlands:  "), "Technical Assistance at Vidiled -> Independent Installer at FSN"),
+        P(Strong("To Slovenia:  "), "Bartender at Hostel Pod Voglom -> Independent Programmer for Tehnosol"),
+        P(Strong("Establishing:  "), "Set up S.P.: SEZA -> Freelance work for Luxonis"),
+        P(Strong("Current:  "), "Working on a personal project -> Your next project?"),
+
         H2("Contact"),
-        P("Feel free to reach out to me:"),
-        Group(A("📧 Email", href="mailto:bart@seza.si"), A("🐙 GitHub", href="https://github.com/sezabart"), ),
+        P("Feel free to reach out to via my ", A("📧 Email", href="mailto:bart@seza.si"), " and check out my ", A("🐙 GitHub", href="https://github.com/sezabart")),
         style="max-width: 80%; margin: auto auto 5rem auto; text-align: center;",
     )
 
