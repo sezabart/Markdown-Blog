@@ -34,3 +34,10 @@ blogs:
       not_subscribed: "Not subscribed"
 
     disclaimer: "© 2024 Bart Smits"
+    
+mail:
+  smtp:
+    host: "mail.seza.si"
+    port: 465
+    user: "blog@seza.si"
+  from: "blog@seza.si"

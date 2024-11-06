@@ -2,7 +2,7 @@ from fasthtml.common import (
     # FastHTML's HTML tags
     A, AX, Button, Card, CheckboxX, Container, Div, Form, Grid, Group,P,I, H1, H2, H3, H4, H5, Hr, Hidden, Input, Img, Li, Ul, Ol, Main, Script, Style, Strong, Textarea, Title, Titled, Select, Option, Table, Tr, Th, Td,
     # FastHTML's specific symbols
-    Beforeware, FastHTML, fill_form, picolink, serve, NotStr,
+    serve, NotStr,
     # From Starlette, Fastlite, fastcore, and the Python standard library:
     FileResponse, Response ,NotFoundError, RedirectResponse, patch, dataclass
 )
@@ -11,44 +11,12 @@ from fasthtml.common import (
 import markdown
 from pathlib import Path
 from datetime import datetime
-import yaml
 from babel.dates import format_date
 
-# Load configuration from a YAML file
-config_path = Path("config.yaml")
 
-with open(config_path, "r") as file:
-    config = yaml.safe_load(file)
-
-# Directory containing the markdown files
-content_dir = Path(config['content_dir'])
-blogs_config = config['blogs']
-
-
-
-# This will be our 404 handler, which will return a simple error page.
-def _not_found(req, exc): return Titled('404', 'Page Not Found')
-
-# FastHTML includes the "HTMX" and "Surreal" libraries in headers, unless you pass `default_hdrs=False`.
-app = FastHTML(exception_handlers={404: _not_found},
-               # PicoCSS is a tiny CSS framework that we'll use for this project.
-               # `picolink` is pre-defined with the header for the PicoCSS stylesheet.
-               hdrs=(picolink,
-                     Style(':root { --pico-font-size: 100%}'),
-                )
-      )
+from make_app import app, blogs_config, content_dir
 
 rt = app.route
-
-def MailForm(blog):
-    blog_config = blogs_config[blog]
-    return Group(
-                Input(placeholder="Email", type="email", id="email", style="width: 40%"),
-                Button(blog_config['email']['subscribe'], hx_post=f"/blogs/{blog}/subscribe", hx_swap="outerHTML", hx_include="#email"),
-                Button(blog_config['email']['unsubscribe'], hx_delete=f"blogs/{blog}/unsubscribe", hx_swap="outerHTML", hx_include="#email", cls="outline"),
-                style="width: 100%",
-            ),
-
 
 
 def Update(update_path, post_name, blog):
@@ -127,6 +95,8 @@ def list_blogs():
         style="max-width: 80%; margin: auto auto 5rem auto;",
     )
 
+from mail import MailForm
+
 @rt("/blogs/{blog:str}/")
 def list_posts(blog:str):
     blog_config = blogs_config[blog]
@@ -138,7 +108,7 @@ def list_posts(blog:str):
     )
     return Titled(
         blog_config['title'],
-        A(f"{blog_config['back']} Blogs", href="/blogs/" , hx_boost="true"),
+        #A(f"{blog_config['back']} Blogs", href="/blogs/" , hx_boost="true"),
         Hr(),
         P(blog_config['intro']),
         *[A(H4(post), href=f"/blogs/{blog}/post/{post}", hx_boost="true") for post in posts],
@@ -183,38 +153,5 @@ def get_post_file(blog:str, post_name: str, filename: str):
     return FileResponse(post_file)
 
 
-@rt("/blogs/{blog:str}/subscribe")
-def post(blog:str, email: str): # to list
-    blog_config = blogs_config[blog]
-    mailing_list_file = Path(f"mailing_lists/{blog}.txt")
-    if not mailing_list_file.exists():
-        mailing_list_file.touch()
-    
-    with mailing_list_file.open("r+") as file:
-        emails = file.read().splitlines()
-        if email not in emails:
-            file.write(email + "\n")
-            return Button(blog_config['email']['subscribe_success'], disabled=True)
-        else:
-            return Button(blog_config['email']['already_subscribed'], disabled=True)
-
-@rt("/blogs/{blog:str}/unsubscribe")
-def delete(blog:str, email: str): # from list
-    blog_config = blogs_config[blog]
-    mailing_list_file = Path(f"mailing_lists/{blog}.txt")
-    if not mailing_list_file.exists():
-        return blog_config['email']['not_subscribed']
-    
-    with mailing_list_file.open("r+") as file:
-        emails = file.read().splitlines()
-        if email in emails:
-            emails.remove(email)
-            file.seek(0)
-            file.truncate()
-            file.write("\n".join(emails) + "\n")
-            return Button(blog_config['email']['unsubscribe_success'], disabled=True, cls="outline")
-        else:
-            return Button(blog_config['email']['not_subscribed'], disabled=True, cls="outline")
-        
 if __name__ == "__main__":
     serve()
