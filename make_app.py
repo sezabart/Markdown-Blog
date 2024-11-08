@@ -2,6 +2,7 @@ from fasthtml.common import (
     FastHTML, Titled, Style, picolink
 )
 
+
 # This will be our 404 handler, which will return a simple error page.
 def _not_found(req, exc): return Titled('404', 'Page Not Found')
 
@@ -11,6 +12,7 @@ app = FastHTML(exception_handlers={404: _not_found},
                # `picolink` is pre-defined with the header for the PicoCSS stylesheet.
                hdrs=(picolink,
                      Style(':root { --pico-font-size: 100%}'),
+                    Style(open("styles.css").read())
                 )
       )
 

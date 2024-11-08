@@ -34,8 +34,9 @@ def Update(update_path, post_name, blog):
         NotStr(
             markdown.markdown(
                 update_path.read_text(encoding="utf-8"),
-                extensions=["markdown.extensions.tables"]
-                ).replace('src="', f'src="{post_name}/')
+                extensions=["markdown.extensions.tables"],
+                output_format="html5"
+            ).replace('<table>', '<table class="responsive-table">').replace('src="', f'src="{post_name}/')
             ),
         I(f'{blog_config["written"]} {format_date(date, locale=blog_config["locale"])}' if date else None),
         style="max-width: 80%; margin: auto auto 5rem auto;",
