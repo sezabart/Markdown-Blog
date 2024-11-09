@@ -2,7 +2,7 @@ content_dir: "content"
 blogs:
   nlblog:
     title: "Barts Blog"
-    intro: "Bla bla bla"
+    intro: "Terug van weggeweest, nu met 20% minder zout."
     back: "< Terug naar"
     written: "Geschreven op"
     
