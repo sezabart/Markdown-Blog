@@ -5,7 +5,7 @@ from fasthtml.common import (
 
 from pathlib import Path
 
-from make_app import app, blogs_config
+from make_app import app, blogs_config, mail_config
 rt = app.route
 
 def MailForm(blog):
@@ -50,7 +50,56 @@ def delete(blog:str, email: str): # from list
         else:
             return Button(blog_config['email']['not_subscribed'], disabled=True, cls="outline")
         
-def send_mail(blog, post_name, email, update):
-    blog_config = blogs_config[blog]
-    # Send an email to the subscriber
-    pass
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+import os
+
+def send_blog_to_subscribers(blog, post_name, html_content, image_paths):
+    mailing_list_file = Path(f"mailing_lists/{blog}.txt")
+    
+    if not mailing_list_file.exists():
+        print("Mailing list file does not exist.")
+        return
+    
+    with mailing_list_file.open("r") as file:
+        emails = file.read().splitlines()
+    # Validate email addresses
+    emails = [email for email in emails if email and "@" in email]
+    print(f"Emails: {emails}")
+    
+    sender_email = mail_config['sender']
+    smtp_server = mail_config['smtp']['server']
+    smtp_port = mail_config['smtp']['port']
+    smtp_user = mail_config['smtp']['user']
+    smtp_password = os.getenv('SMTP_PASSWORD')
+    if not smtp_password:
+        print("SMTP_PASSWORD environment variable is not set.")
+        return
+    
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['Subject'] = f"New post: {post_name}"
+    msg.attach(MIMEText(html_content, 'html'))
+    
+    for image_path in image_paths:
+        with open(image_path, 'rb') as img:
+            mime = MIMEImage(img.read(), )#_subtype="jpeg")
+            #TODO resize image
+            mime.add_header('Content-ID', '<' + image_path + '>') # TODO: Split? so disgegard extension
+            msg.attach(mime)
+    
+    with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+        server.login(smtp_user, smtp_password)
+        print("Logged in")
+        try:
+            for email in emails:
+                msg['To'] = email
+                server.sendmail(sender_email, email, msg.as_string())
+                print(f"Email sent to {email}")
+        except Exception as e:
+            print(f"Failed to send email to {email}: {e}")
+
+send_blog_to_subscribers("nlblog", "New Post", '<b>Some <i>HTML</i> text</b> and an image.<br><img src="cid:Test.png"><br>Nifty!', ['Test.png'])

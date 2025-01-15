@@ -29,3 +29,4 @@ with open(config_path, "r") as file:
 # Directory containing the markdown files
 content_dir = Path(config['content_dir'])
 blogs_config = config['blogs']
+mail_config = config['mail']
