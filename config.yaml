@@ -1,4 +1,6 @@
 content_dir: "content"
+domain: "seza.si"
+image_width: 500
 blogs:
   nlblog:
     title: "Barts Blog"
@@ -15,6 +17,8 @@ blogs:
       already_subscribed: "Al geabonneerd"
       unsubscribe_success: "Uitgeschreven"
       not_subscribed: "Niet geabonneerd"
+      subject: "Nieuwe post op Barts Blog"
+      link: "Voor betere weergave, en om je uit te schrijven, klik hier."
 
     disclaimer: "© 2024 Bart Smits"
   ljblog:
@@ -32,6 +36,8 @@ blogs:
       already_subscribed: "Already subscribed"
       unsubscribe_success: "Unsubscribed"
       not_subscribed: "Not subscribed"
+      subject: "New post on LJ blog"
+      link: "For better view, and to unsubscribe, click here."
 
     disclaimer: "© 2024 Bart Smits"
     

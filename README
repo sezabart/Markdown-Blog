@@ -23,15 +23,26 @@ Markdown-Blog is a lightweight FastHTML server designed to automatically display
     pip install -r requirements.txt
     ```
 
-## Usage
+## Usage development
 
 1. Start the server:
     ```sh
-    python blog.py 
+    python main.py 
     ```
 2. Place your blog directories inside the `content` path. Each directory should contain markdown files and any related assets.
 
-3. Find your server at 
+## Usage production
+
+1. Set ENV variables:
+```sh
+SMTP_PASSWORD=password
+```
+2. Use the following command to have ssl:
+```sh
+uvicorn main:app --host 0.0.0.0 --port 443 --ssl-keyfile=/etc/letsencrypt/live/seza.si/privkey.pem --ssl-certfile=/etc/letsencrypt/live/seza.si/fullchain.pem
+```
+3. Renew certification
+`certbot renew`
 
 ## Directory Structure
 

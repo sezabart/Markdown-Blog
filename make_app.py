@@ -30,3 +30,5 @@ with open(config_path, "r") as file:
 content_dir = Path(config['content_dir'])
 blogs_config = config['blogs']
 mail_config = config['mail']
+domain = config['domain']
+image_width = config['image_width']

@@ -1,11 +1,14 @@
 from fasthtml.common import (
     # FastHTML's HTML tags
-    Group, Button, Input,
+    Group, Button, Input, H1, Response, Html, to_xml, A,
 )
 
-from pathlib import Path
+from PIL import Image
+import io
 
-from make_app import app, blogs_config, mail_config
+from pathlib import Path
+from make_app import app, blogs_config, mail_config, content_dir, domain, image_width
+from update import EmailUpdate
 rt = app.route
 
 def MailForm(blog):
@@ -56,8 +59,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 import os
+import re
 
-def send_blog_to_subscribers(blog, post_name, html_content, image_paths):
+def send_html_to_subscribers(blog, post_name, html_content, image_paths):
     mailing_list_file = Path(f"mailing_lists/{blog}.txt")
     
     if not mailing_list_file.exists():
@@ -79,16 +83,29 @@ def send_blog_to_subscribers(blog, post_name, html_content, image_paths):
         print("SMTP_PASSWORD environment variable is not set.")
         return
     
+    blog_config = blogs_config[blog]
+    
     msg = MIMEMultipart()
     msg['From'] = sender_email
-    msg['Subject'] = f"New post: {post_name}"
+    msg['Subject'] = f"{blog_config['email']['subject']}: {post_name}"
     msg.attach(MIMEText(html_content, 'html'))
-    
+    image_paths = [f"{content_dir}/{blog}/{post_name}/{image_path}" for image_path in image_paths]
     for image_path in image_paths:
         with open(image_path, 'rb') as img:
-            mime = MIMEImage(img.read(), )#_subtype="jpeg")
-            #TODO resize image
-            mime.add_header('Content-ID', '<' + image_path + '>') # TODO: Split? so disgegard extension
+            img = Image.open(image_path)
+
+            img = img.convert("RGB")
+            width = image_width
+            width_percent = (width / float(img.size[0]))
+            height_size = int((float(img.size[1]) * float(width_percent)))
+            img = img.resize((width, height_size))
+            img_io = io.BytesIO()
+            
+            img.save(img_io, format="JPEG", quality=95, optimize=True)
+            img_io.seek(0)
+            mime = MIMEImage(img_io.read(), _subtype="jpeg")
+
+            mime.add_header('Content-ID', '<' + image_path.split('/')[-1] + '>') # TODO: Split? so disgegard extension
             msg.attach(mime)
     
     with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
@@ -102,4 +119,36 @@ def send_blog_to_subscribers(blog, post_name, html_content, image_paths):
         except Exception as e:
             print(f"Failed to send email to {email}: {e}")
 
-send_blog_to_subscribers("nlblog", "New Post", '<b>Some <i>HTML</i> text</b> and an image.<br><img src="cid:Test.png"><br>Nifty!', ['Test.png'])
+
+
+@rt("/blogs/{blog:str}/post/{post_name:str}/send")
+def send_post(blog:str, post_name: str):
+
+
+
+    post_dir = content_dir / f"{blog}" / f"{post_name}"
+    md_files = sorted([f for f in post_dir.iterdir() if f.suffix == ".md"], reverse=False)
+    
+    if not md_files:
+        return Response("No markdown files found", status_code=404)
+    
+    updates = [EmailUpdate(path, post_name, blog) for path in md_files]
+
+    html_content = to_xml(
+        Html(
+            H1(post_name), 
+            A(blogs_config[blog]['email']['link'], href=f"{domain}/blogs/{blog}/post/{post_name}"),
+            *updates
+    ))
+
+    image_paths = re.findall(r'src="([^"]+)"', html_content) # post/image.jpg
+
+    html_content = html_content.replace(f'src="', f'src="cid:')
+    
+    
+    #print(f"Image paths: {image_paths}")
+    
+    send_html_to_subscribers(blog, post_name, html_content, image_paths)
+
+    
+    return Button("Sent", disabled=True)
