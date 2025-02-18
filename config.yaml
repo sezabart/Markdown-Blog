@@ -46,4 +46,4 @@ mail:
     server: "mail.seza.si"
     port: 465
     user: "blog@seza.si"
-  sender: "blog@seza.si"
+  sender: "Bart's Blog <blog@seza.si>"

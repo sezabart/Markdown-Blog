@@ -122,8 +122,10 @@ def send_html_to_subscribers(blog, post_name, html_content, image_paths):
 
 
 @rt("/blogs/{blog:str}/post/{post_name:str}/send")
-def send_post(blog:str, post_name: str):
-
+def send_post(request, blog:str, post_name: str):
+    password = os.environ.get('ADMIN_PASSWORD')
+    if 'password' not in request.query_params or request.query_params['password'] != password:
+        return Response("Unauthorized", status_code=401)
 
 
     post_dir = content_dir / f"{blog}" / f"{post_name}"
@@ -151,4 +153,4 @@ def send_post(blog:str, post_name: str):
     send_html_to_subscribers(blog, post_name, html_content, image_paths)
 
     
-    return Button("Sent", disabled=True)
+    return Response(f"Emails sent to subscribers", status_code=200)
