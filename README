@@ -36,6 +36,7 @@ Markdown-Blog is a lightweight FastHTML server designed to automatically display
 1. Set ENV variables:
 ```sh
 SMTP_PASSWORD=password
+ADMIN_PASSWORD=password
 ```
 2. Use the following command to have ssl:
 ```sh

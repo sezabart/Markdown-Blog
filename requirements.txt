@@ -1,2 +1,4 @@
 python-fasthtml
 markdown
+babel
+pillow
