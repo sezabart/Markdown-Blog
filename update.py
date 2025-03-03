@@ -22,6 +22,7 @@ def Update(update_path, post_name, blog):
                 extensions=["markdown.extensions.tables"],
                 output_format="html"
             ).replace('<table>', '<table class="responsive-table">').replace('src="', f'src="{post_name}/')
+            .replace('<img', f'<img style="max-width: 600px"')
             ),
         I(f'{blog_config["written"]} {format_date(date, locale=blog_config["locale"])}' if date else None),
         style="max-width: 80%; margin: auto auto 5rem auto;",
