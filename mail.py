@@ -113,8 +113,9 @@ def send_html_to_subscribers(blog, post_name, html_content, image_paths):
         print("Logged in")
         try:
             for email in emails:
-                msg['To'] = email
-                server.sendmail(sender_email, email, msg.as_string())
+                msg_copy = msg.copy()
+                msg_copy['To'] = email
+                server.sendmail(sender_email, email, msg_copy.as_string())
                 print(f"Email sent to {email}")
         except Exception as e:
             print(f"Failed to send email to {email}: {e}")
