@@ -33,3 +33,4 @@ mailing_lists/
 
 # Ignore git files
 .gitmodules
+.env
