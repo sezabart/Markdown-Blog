@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    image: markdown-blog:latest
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    volumes:
+      # Mount host blog content into container's content dir. Change BLOG_CONTENT env var to point
+      # to the server location, e.g. /mnt/hdd/documents/.../blog-content
+      - ${BLOG_CONTENT:-/mnt/hdd/documents/blog-content}:/app/content:ro
+      # Keep static assets editable on host
+      - ./static:/app/static:ro
+      # Persist mailing lists and mail metadata so they survive container restarts
+      - ./mailing_lists:/app/mailing_lists
+      - ./mail_meta:/app/mail_meta
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

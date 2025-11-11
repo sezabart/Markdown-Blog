@@ -65,3 +65,30 @@ Contributions are welcome! Please submit a pull request or open an issue to disc
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Docker
+
+Run the app in Docker for a reproducible deployment. The compose setup below demonstrates mounting an existing host directory (for example a path on a larger attached disk) into the container's `content` directory so you can keep blog content outside the container.
+
+- Build image and start (preferred):
+
+```sh
+# Set BLOG_CONTENT to the host path where your blog content lives (example):
+export BLOG_CONTENT=/mnt/hdd/documents/your-user/blog-content
+export SMTP_PASSWORD=your_smtp_password
+export ADMIN_PASSWORD=your_admin_password
+docker compose up --build -d
+```
+
+- Quick local run (without compose):
+
+```sh
+# Build Docker image
+docker build -t markdown-blog .
+# Run, mounting content directory
+docker run -p 8000:8000 -e SMTP_PASSWORD -e ADMIN_PASSWORD -v /mnt/hdd/documents/your-user/blog-content:/app/content:ro markdown-blog
+```
+
+Notes:
+- The compose file maps `./mailing_lists` and `./mail_meta` to the container so mailing lists and send metadata persist outside the container. If you want them elsewhere, change the volume paths.
+- The default listen port is 8000; map that to 80/443 with a reverse proxy (nginx, Caddy) if you need TLS.
