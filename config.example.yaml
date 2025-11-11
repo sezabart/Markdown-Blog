@@ -1,8 +1,8 @@
 content_dir: "content"
-domain: "seza.si"
+domain: "example.com"
 image_width: 500
-
 landing:
+  # small example: keys are used as `value` in the select, label is shown to the user.
   options:
     - key: "dev"
       label: "Developer"
@@ -19,17 +19,13 @@ landing:
         - title: "TensorFlow"
           desc: "Worked with TensorFlow"
           img: "/static/tensorflow.png"
-
-
 blogs:
   nlblog:
     title: "Barts Blog"
     intro: "Terug van weggeweest, nu met 20% minder zout."
     back: "< Terug naar"
     written: "Geschreven op"
-    
     locale: "nl_NL"
-
     email:
       subscribe: "Abboneer"
       unsubscribe: "Uitschrijven"
@@ -39,7 +35,6 @@ blogs:
       not_subscribed: "Niet geabonneerd"
       subject: "Nieuwe post op Barts Blog"
       link: "Voor betere weergave, en om je uit te schrijven, klik hier."
-
     disclaimer: "© 2024 Bart Smits"
   portfolio:
     title: "Portfolio"
@@ -56,34 +51,10 @@ blogs:
       not_subscribed: "Not subscribed"
       subject: "New portfolio item"
       link: "View online"
-
     disclaimer: "© 2024 Bart Smits"
-
-
-  ljblog:
-    title: "LJ blog"
-    intro: "Blah blah blah"
-    back: "< Back to"
-    written: "Written on"
-
-    locale: "en_US"
-
-    email:
-      subscribe: "Subscribe"
-      unsubscribe: "Unsubscribe"
-      subscribe_success: "Subscribed"
-      already_subscribed: "Already subscribed"
-      unsubscribe_success: "Unsubscribed"
-      not_subscribed: "Not subscribed"
-      subject: "New post on LJ blog"
-      link: "For better view, and to unsubscribe, click here."
-
-    disclaimer: "© 2024 Bart Smits"
-    
 mail:
   smtp:
-    server: "mail.seza.si"
+    server: "mail.example.com"
     port: 465
-    user: "blog@seza.si"
-  sender: "Bart's Blog <blog@seza.si>"
-
+    user: "blog@example.com"
+  sender: "Blog <blog@example.com>"

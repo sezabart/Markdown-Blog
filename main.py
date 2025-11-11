@@ -9,6 +9,7 @@ from fasthtml.common import (
 
 from pathlib import Path
 from make_app import app, blogs_config, content_dir
+from make_app import landing_config
 
 rt = app.route
 
@@ -17,6 +18,20 @@ from update import Update
 
 @rt("/")
 def home():
+    # Landing options come from make_app.landing_config (optional). We render a Select that
+    # requests card groups from /landing/cards via HTMX. If no landing_config is provided,
+    # show the original static cards.
+    options = landing_config.get('options', []) if landing_config else []
+    print("Landing options:", options)
+
+    # Default cards (kept for fallback / no-landing-config)
+    default_cards = Group(
+        Card(Img(src="/static/django.png", alt="Django", style="width: 100px;"), footer=P("Expertise in Django"), style="max-width: 250px;"),
+        Card(Img(src="/static/git.png", alt="Git", style="width: 100px;"), footer=P("Experience with Git"), style="max-width: 250px;"),
+        Card(Img(src="/static/htmx.png", alt="HTMX", style="width: 100px;"), footer=P("HTMX skills"), style="max-width: 250px;"),
+        style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;",
+    )
+
     return Titled(
         "SEZA",
         Div(
@@ -24,20 +39,33 @@ def home():
             style="margin-bottom: 2rem;"
         ),
         H1("Bart Smits"),
-        P("👋 I am a programmer with a passion for creating efficient and elegant code."),
-        H2("About Skills, I have..."),
-        Group(
-            Card(Img(src="/static/django.png", alt="Django", style="width: 100px;"), footer=P("Expertise in Django, a high-level Python web framework."), style="max-width: 250px;"),
-            Card(Img(src="/static/git.png", alt="Git", style="width: 100px;"), footer=P("Experience with Git, a distributed version control system."), style="max-width: 250px;"),
-            Card(Img(src="/static/tensorflow.png", alt="TensorFlow", style="width: 100px;"), footer=P("Worked with TensorFlow, an open-source machine learning framework."), style="max-width: 250px;"),
-            style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;",
+
+        # Make the label text look like the select so they visually match
+        Div(
+            P("👋 I am", style="text-align: right; margin: 0; align-self: flex-start;"),  # align to top
+            # Wrap the Select so it appears as underlined text with a small V (caret)
+            Div(
+                Select(
+                    *[Option(opt['label'],id=opt['key']) for opt in options],
+                    id="landing-select",
+                    name="role",
+                    hx_get="/landing/cards",
+                    hx_trigger="change",
+                    hx_target="#landing-cards",
+                    hx_swap="innerHTML",
+                    style=(
+                        "appearance:none; -webkit-appearance:none; -moz-appearance:none;"
+                        "background: transparent; border: none; border-bottom: 1px solid #374151;"
+                        "padding: 0.3rem 0 2px 5px; font-size: 1rem; line-height: 1; cursor: pointer; outline: none;"
+                        "vertical-align: middle;"
+                    ),
+                ) if options else P("developer"),
+            ),
+            P("with the following skills:"),
+            style="display: inline-flex; gap: 0.75rem; align-items: flex-start;"
         ),
-        Group(
-            Card(Img(src="/static/htmx.png", alt="HTMX", style="width: 100px;"), footer=P("Expertise in HTMX, a library that allows you to access modern browser features directly from HTML."), style="max-width: 250px;"),
-            Card(Img(src="/static/fastapi.png", alt="FastAPI", style="width: 100px;"), footer=P("Worked with FastAPI, a modern, fast (high-performance), web framework for building APIs with Python."), style="max-width: 250px;"),
-            Card(Img(src="/static/sqlite.png", alt="SQLite", style="width: 100px;"), footer=P("Expertise in SQLite, a small, fast, self-contained, high-reliability, full-featured, SQL database engine."), style="max-width: 250px;"),
-            style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;",
-        ),
+        
+        Div(id="landing-cards", children=(default_cards if not options else None)),
 
         H2("About My Journey 🚀"),
         P(Strong("Education:  "), "Willem van Oranje College -> TU Delft (BSc Aerospace Engineering)"),
@@ -50,6 +78,30 @@ def home():
         P("Feel free to reach out to via my ", A("📧 Email", href="mailto:bart@seza.si"), " and check out my ", A("🐙 GitHub", href="https://github.com/sezabart")),
         style="max-width: 80%; margin: auto auto 5rem auto; text-align: center;",
     )
+
+
+@rt("/landing/cards")
+def landing_cards(role: str = None):
+    # Return a Group of Cards filtered by landing_config. `role` corresponds to option 'key'.
+    options = landing_config.get('options', []) if landing_config else []
+    if not options:
+        return Div("No landing configuration available.")
+
+    # Find option
+    chosen = None
+    for opt in options:
+        if opt['key'] == role:
+            chosen = opt
+            break
+
+    cards = []
+    # Build cards from chosen mapping or show all
+    for opt in options if chosen is None else [chosen]:
+        # each option may define a list of cards
+        for c in opt.get('cards', []):
+            cards.append(Card(Img(src=c.get('img', '/static/headshot.jpg'), alt=c.get('title', ''), style="width: 100px;"), footer=P(c.get('desc', '')), style="max-width: 250px;"))
+
+    return Group(*cards, style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;")
 
 @rt("/static/{filename:str}")
 def get_static_file(filename: str):

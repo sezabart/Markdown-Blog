@@ -32,3 +32,5 @@ blogs_config = config['blogs']
 mail_config = config['mail']
 domain = config['domain']
 image_width = config['image_width']
+# Optional landing configuration (used by the landing page dropdown)
+landing_config = config.get('landing', {})
